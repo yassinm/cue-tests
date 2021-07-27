@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"strings"
 
@@ -17,7 +18,12 @@ const (
 )
 
 func Run() error {
-	overlay, err := loadFiles(scripts.StaticFs)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	overlay, err := loadFiles(scripts.StaticFs, cwd)
 	if err != nil {
 		return err
 	}
@@ -40,8 +46,13 @@ func Run() error {
 	return nil
 }
 
-func loadFiles(fsys fs.FS) (map[string]load.Source, error) {
+func loadFiles(fsys fs.FS, rDir string) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
+
+	abs := func(dpath string) string {
+		return path.Join(rDir, dpath)
+	}
+
 	err := fs.WalkDir(fsys, ".", func(dpath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -51,12 +62,8 @@ func loadFiles(fsys fs.FS) (map[string]load.Source, error) {
 			return nil
 		}
 
-		ovpath := ""
-		if strings.HasSuffix(dpath, "module.cue") {
-			ovpath = path.Join("/"+Root, "cue.mod", "module.cue")
-		} else if strings.HasSuffix(dpath, ".cue") {
-			ovpath = path.Join("/"+Root, "scripts", dpath)
-		} else {
+		ovpath := abs(path.Join("scripts", dpath))
+		if !strings.HasSuffix(dpath, ".cue") {
 			return nil
 		}
 
