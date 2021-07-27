@@ -1,7 +1,6 @@
-package main
+package app
 
 import (
-	"embed"
 	"fmt"
 	"io"
 	"io/fs"
@@ -10,26 +9,15 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
+	"play.ground/pkg/scripts"
 )
 
 const (
 	Root = "play.ground"
 )
 
-//go:embed scripts
-var static embed.FS
-
-func main() {
-	fmt.Println("starting ... ")
-
-	if err := Run(); err != nil {
-		fmt.Println(" ┬───► load failed")
-		return
-	}
-}
-
 func Run() error {
-	overlay, err := loadFiles(static)
+	overlay, err := loadFiles(scripts.StaticFs)
 	if err != nil {
 		return err
 	}
@@ -39,7 +27,7 @@ func Run() error {
 		Overlay: overlay,
 	}
 
-	insts := load.Instances([]string{"./main.cue"}, config)
+	insts := load.Instances([]string{"./local/main.cue"}, config)
 
 	ctx := cuecontext.New()
 	for _, instIdx := range insts {
@@ -75,7 +63,7 @@ func loadFiles(fsys fs.FS) (map[string]load.Source, error) {
 				return err
 			}
 
-			ovpath := path.Join("/"+Root, dpath)
+			ovpath := path.Join("/"+Root, "scripts", dpath)
 
 			fmt.Println("dpath ", dpath)
 			fmt.Println("ovpath ", ovpath)
