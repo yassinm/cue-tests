@@ -51,25 +51,31 @@ func loadFiles(fsys fs.FS) (map[string]load.Source, error) {
 			return nil
 		}
 
-		if strings.Contains(dpath, ".cue") {
-
-			f, err := fsys.Open(dpath)
-			if err != nil {
-				return err
-			}
-
-			buf, err := io.ReadAll(f)
-			if err != nil {
-				return err
-			}
-
-			ovpath := path.Join("/"+Root, "scripts", dpath)
-
-			fmt.Println("dpath ", dpath)
-			fmt.Println("ovpath ", ovpath)
-
-			overlay[ovpath] = load.FromBytes(buf)
+		ovpath := ""
+		if strings.HasSuffix(dpath, "module.cue") {
+			ovpath = path.Join("/"+Root, "cue.mod", "module.cue")
+		} else if strings.HasSuffix(dpath, ".cue") {
+			ovpath = path.Join("/"+Root, "scripts", dpath)
+		} else {
+			return nil
 		}
+
+		f, err := fsys.Open(dpath)
+		if err != nil {
+			return err
+		}
+
+		buf, err := io.ReadAll(f)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("dpath ", dpath)
+		fmt.Println("ovpath ", ovpath)
+		fmt.Println("")
+
+		overlay[ovpath] = load.FromBytes(buf)
+
 		return nil
 	})
 
