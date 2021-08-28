@@ -17,6 +17,12 @@ const (
 	Root = "play.ground"
 )
 
+type (
+	Resolver interface {
+		Resolve(path string) ([]byte, error)
+	}
+)
+
 func Run() error {
 	cwd, err := os.Getwd()
 	if err != nil {
